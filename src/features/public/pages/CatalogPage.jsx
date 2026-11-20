@@ -47,6 +47,8 @@ function CatalogPage() {
   const [favorites, setFavorites] = useState([]);
   const [activeReservations, setActiveReservations] = useState(0);
   const [activeQuickFilters, setActiveQuickFilters] = useState([]);
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     const storedUser = localStorage.getItem('habitara_user');
@@ -117,6 +119,12 @@ function CatalogPage() {
       return;
     }
 
+    // Actualización optimista: cambiar UI inmediatamente
+    const wasActive = favorites.includes(roomId);
+    setFavorites(prev =>
+      wasActive ? prev.filter(id => id !== roomId) : [...prev, roomId]
+    );
+
     try {
       const response = await fetch(`${API_URL}/favorites`, {
         method: 'POST',
@@ -135,6 +143,10 @@ function CatalogPage() {
 
       setFavorites(data.data.favorites.map((id) => Number(id)));
     } catch (error) {
+      // Revertir si falla
+      setFavorites(prev =>
+        wasActive ? [...prev, roomId] : prev.filter(id => id !== roomId)
+      );
       console.error('Error updating favorites:', error);
     }
   };
@@ -165,8 +177,21 @@ function CatalogPage() {
       const fn = QUICK_FILTER_FN[f];
       if (fn) result = result.filter(fn);
     }
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase().trim();
+      result = result.filter(r => {
+        const loc = r.location || {};
+        return (
+          r.title?.toLowerCase().includes(q) ||
+          loc.city?.toLowerCase().includes(q) ||
+          loc.district?.toLowerCase().includes(q) ||
+          loc.address?.toLowerCase().includes(q) ||
+          r.description?.toLowerCase().includes(q)
+        );
+      });
+    }
     return result;
-  }, [selectedType, rooms, activeQuickFilters]);
+  }, [selectedType, rooms, activeQuickFilters, searchQuery]);
 
   const navigate = useNavigate();
 
@@ -194,7 +219,12 @@ function CatalogPage() {
 
           <div className="catalog-search">
             <span className="search-icon">⌕</span>
-            <input type="text" placeholder="Universidad, barrio o zona" />
+            <input
+              type="text"
+              placeholder="Universidad, barrio o zona"
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+            />
           </div>
 
           <div className="catalog-actions">
@@ -206,7 +236,7 @@ function CatalogPage() {
                     <span className="favorites-count">{favorites.length}</span>
                   )}
                 </Link>
-                <Link to="/reservations" className="icon-action" title="Mis reservas" aria-label="Mis reservas">
+                <Link to="/reservations" className="icon-action catalog-reservations-icon" title="Mis reservas" aria-label="Mis reservas">
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                     <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
                   </svg>
@@ -218,15 +248,20 @@ function CatalogPage() {
               </>
             ) : (
               <>
-                <Link to="/login" className="link-button muted">Iniciar sesión</Link>
-                <Link to="/register" className="link-button primary">Registrarse</Link>
+                {/* Desktop: botones de texto */}
+                <Link to="/login" className="link-button muted catalog-auth-btn">Iniciar sesión</Link>
+                <Link to="/register" className="link-button primary catalog-auth-btn">Registrarse</Link>
+                {/* Mobile: solo "Entrar" compacto */}
+                <Link to="/login" className="catalog-auth-mobile">Entrar</Link>
               </>
             )}
           </div>
         </div>
+
       </header>
 
       <main className="container catalog-main">
+        {/* Hero: oculto en mobile, visible en tablet+ */}
         <section className="hero-panel">
           <div className="hero-copy">
             <span className="eyebrow">Encuentra tu espacio ideal</span>
@@ -236,7 +271,7 @@ function CatalogPage() {
             </p>
           </div>
 
-          <div className="filters-panel">
+          <div className={`filters-panel${filtersOpen ? ' filters-panel--open' : ''}`}>
             <div className="panel-row">
               <label>
                 Presupuesto máximo
@@ -288,17 +323,109 @@ function CatalogPage() {
           </div>
         </section>
 
+        {/* Búsqueda mobile: encima de filtros */}
+        <div className="catalog-search-mobile">
+          <span className="search-icon">⌕</span>
+          <input
+            type="text"
+            placeholder="Universidad, barrio o zona"
+            value={searchQuery}
+            onChange={e => setSearchQuery(e.target.value)}
+          />
+        </div>
+
+        {/* Barra de filtros mobile */}
+        <div className="catalog-mobile-bar">
+          <button
+            type="button"
+            className={`catalog-filter-btn${filtersOpen ? ' catalog-filter-btn--active' : ''}`}
+            onClick={() => setFiltersOpen(o => !o)}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="4" y1="6" x2="20" y2="6"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="11" y1="18" x2="13" y2="18"/>
+            </svg>
+            Filtros{activeQuickFilters.length > 0 && <span className="catalog-filter-count">{activeQuickFilters.length}</span>}
+          </button>
+
+          <div className="catalog-mobile-types">
+            {[
+              { label: 'Todos', value: 'Todos' },
+              { label: 'Habitación', value: 'room' },
+              { label: 'Apartamento', value: 'apartment' },
+              { label: 'Estudio', value: 'studio' },
+              { label: 'Pensión', value: 'pension' },
+            ].map(({ label, value }) => (
+              <button
+                key={value}
+                type="button"
+                className={selectedType === value ? 'chip active' : 'chip ghost'}
+                onClick={() => setSelectedType(value)}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Panel de filtros mobile desplegable */}
+        {filtersOpen && (
+          <div className="catalog-mobile-filters">
+            <div className="panel-row">
+              <label>
+                Presupuesto máximo
+                <div className="range-meta">
+                  <span>COP $ 300.000</span>
+                  <input type="range" min="300000" max="1200000" defaultValue="600000" />
+                  <span>COP $ 1.200.000</span>
+                </div>
+              </label>
+            </div>
+            <div className="select-row" style={{ marginTop: 14 }}>
+              <select defaultValue="Universidad cercana">
+                <option>Universidad cercana</option>
+                <option>Unicor</option>
+                <option>UNMSM</option>
+                <option>UPC</option>
+              </select>
+            </div>
+            <div className="panel-services" style={{ marginTop: 14 }}>
+              {serviceOptions.map((service) => (
+                <label key={service} className="service-check">
+                  <input type="checkbox" /> {service}
+                </label>
+              ))}
+            </div>
+          </div>
+        )}
+
         <section className="results-toolbar">
           <div>
-            <strong>{filteredRooms.length}</strong> habitaciones disponibles cerca de tu búsqueda
+            <strong>{filteredRooms.length}</strong> habitaciones disponibles
           </div>
 
           <div className="view-switcher">
-            <button type="button" className={viewMode === 'grid' ? 'switch active' : 'switch'} onClick={() => setViewMode('grid')}>
-              Grid
+            <button
+              type="button"
+              className={viewMode === 'grid' ? 'switch active' : 'switch'}
+              onClick={() => setViewMode('grid')}
+              title="Vista cuadrícula"
+            >
+              <svg className="switch-icon" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                <rect x="3" y="3" width="8" height="8" rx="1"/><rect x="13" y="3" width="8" height="8" rx="1"/>
+                <rect x="3" y="13" width="8" height="8" rx="1"/><rect x="13" y="13" width="8" height="8" rx="1"/>
+              </svg>
+              <span className="switch-label">Grid</span>
             </button>
-            <button type="button" className={viewMode === 'map' ? 'switch active' : 'switch'} onClick={() => setViewMode('map')}>
-              Mapa
+            <button
+              type="button"
+              className={viewMode === 'map' ? 'switch active' : 'switch'}
+              onClick={() => setViewMode('map')}
+              title="Vista mapa"
+            >
+              <svg className="switch-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/>
+              </svg>
+              <span className="switch-label">Mapa</span>
             </button>
           </div>
         </section>
