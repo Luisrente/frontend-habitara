@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 
 
-const API_URL = 'http://localhost:4000/api';
+import { API_URL } from '../../../config.js';
 
 function LoginPage() {
   const navigate = useNavigate();

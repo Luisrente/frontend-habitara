@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import UserMenu from '../../../shared/components/UserMenu';
 
-const API_URL = 'http://localhost:4000/api';
+import { API_URL } from '../../../config.js';
 
 function buildMonthGrid(year, month) {
   const firstDay = new Date(year, month, 1);

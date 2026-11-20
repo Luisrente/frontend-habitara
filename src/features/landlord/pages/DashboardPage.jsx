@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 
-const API_URL = 'http://localhost:4000/api';
+import { API_URL } from '../../../config.js';
 
 function StatCard({ label, value, sub, color }) {
   return (

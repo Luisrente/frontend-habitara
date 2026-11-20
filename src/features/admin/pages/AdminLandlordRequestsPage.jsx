@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Link, NavLink, useNavigate } from 'react-router-dom';
 import UserIcon from '../../../shared/components/UserIcon';
 
-const API_URL = 'http://localhost:4000/api';
+import { API_URL } from '../../../config.js';
 
 const statusMap = {
   pending: { label: 'Pendiente', className: 'status pending' },

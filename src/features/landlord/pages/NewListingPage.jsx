@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import UserMenu from '../../../shared/components/UserMenu';
 
-const API_URL = 'http://localhost:4000/api';
+import { API_URL } from '../../../config.js';
 
 const amenityOptions = [
   { id: 1, label: 'WiFi', icon: '📶' },

@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import UserMenu from '../../../shared/components/UserMenu';
 
-const API_URL = 'http://localhost:4000/api';
+import { API_URL } from '../../../config.js';
 
 const STATUS = {
   pending:   { label: 'Pendiente',  color: '#92400e', bg: '#fef3c7', dot: '#f59e0b' },
