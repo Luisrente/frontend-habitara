@@ -15,6 +15,7 @@ import LandlordRequestPage from './features/auth/pages/LandlordRequestPage';
 import AdminLandlordRequestsPage from './features/admin/pages/AdminLandlordRequestsPage';
 import AdminReservationsPage from './features/admin/pages/AdminReservationsPage';
 import AccountPage from './features/public/pages/AccountPage';
+import ChatsPage from './features/public/pages/ChatsPage';
 
 function App() {
   return (
@@ -27,6 +28,7 @@ function App() {
       <Route path="/reservations" element={<MyReservationsPage />} />
       <Route path="/become-landlord" element={<LandlordRequestPage />} />
       <Route path="/account" element={<AccountPage />} />
+      <Route path="/chats" element={<ChatsPage />} />
 
       <Route
         path="/dashboard"

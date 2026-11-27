@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import UserMenu from '../../../shared/components/UserMenu';
+import LocationPickerMap from '../../../shared/components/LocationPickerMap.jsx';
 
 import { API_URL } from '../../../config.js';
 
@@ -39,7 +40,6 @@ function NewListingPage() {
     bathrooms: 1,
     maxTenants: 1,
     areaM2: '',
-    distanceToUniversityKm: '',
     idealFor: '',
     availableFrom: '',
     availabilityNote: '',
@@ -49,7 +49,9 @@ function NewListingPage() {
       city: 'Bogotá',
       state: 'Cundinamarca',
       country: 'Colombia',
-      postalCode: ''
+      postalCode: '',
+      latitude: '',
+      longitude: ''
     },
     amenities: [1, 2, 3, 5],
     photos: ['', '', ''],
@@ -109,11 +111,15 @@ function NewListingPage() {
         bathrooms: Number(form.bathrooms),
         maxTenants: Number(form.maxTenants),
         areaM2: form.areaM2 ? Number(form.areaM2) : null,
-        distanceToUniversityKm: form.distanceToUniversityKm ? Number(form.distanceToUniversityKm) : null,
+        distanceToUniversityKm: null,
         idealFor: form.idealFor,
         availableFrom: form.availableFrom || null,
         availabilityNote: form.availabilityNote,
-        location: form.location,
+        location: {
+          ...form.location,
+          latitude:  form.location.latitude  ? Number(form.location.latitude)  : null,
+          longitude: form.location.longitude ? Number(form.location.longitude) : null,
+        },
         amenities: form.amenities,
         photos: form.photos.filter((p) => p && p.trim()).map((p) => ({ url: p })),
         rules
@@ -458,19 +464,6 @@ function NewListingPage() {
                 </div>
 
                 <div className="nl-field">
-                  <label>Distancia a la universidad (km)</label>
-                  <input
-                    type="number"
-                    name="distanceToUniversityKm"
-                    min="0"
-                    step="0.1"
-                    placeholder="1.5"
-                    value={form.distanceToUniversityKm}
-                    onChange={handleChange}
-                  />
-                </div>
-
-                <div className="nl-field">
                   <label>Ideal para</label>
                   <input
                     type="text"
@@ -500,6 +493,59 @@ function NewListingPage() {
                     value={form.availabilityNote}
                     onChange={handleChange}
                   />
+                </div>
+
+                <div className="nl-field nl-field--full">
+                  <label>Ubicación en el mapa</label>
+                  <div className="location-picker-wrap">
+                    <p className="nl-coords-hint">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+                      </svg>
+                      Haz clic en el mapa para marcar la ubicación exacta del alojamiento. El marcador es arrastrable para ajustar la posición.
+                    </p>
+                    <LocationPickerMap
+                      lat={form.location.latitude}
+                      lng={form.location.longitude}
+                      onChange={(lat, lng) =>
+                        setForm(prev => ({
+                          ...prev,
+                          location: {
+                            ...prev.location,
+                            latitude:  parseFloat(lat.toFixed(7)),
+                            longitude: parseFloat(lng.toFixed(7)),
+                          }
+                        }))
+                      }
+                    />
+                    {form.location.latitude && form.location.longitude ? (
+                      <div className="location-picker-coords">
+                        <span>
+                          <strong>Lat:</strong> {form.location.latitude}
+                        </span>
+                        <span>
+                          <strong>Lng:</strong> {form.location.longitude}
+                        </span>
+                        <button
+                          type="button"
+                          className="location-picker-clear"
+                          onClick={() =>
+                            setForm(prev => ({
+                              ...prev,
+                              location: { ...prev.location, latitude: '', longitude: '' }
+                            }))
+                          }
+                        >
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                          </svg>
+                          Limpiar
+                        </button>
+                      </div>
+                    ) : (
+                      <p className="location-picker-empty">Sin ubicación seleccionada</p>
+                    )}
+                  </div>
                 </div>
               </div>
             </section>
@@ -555,9 +601,9 @@ function NewListingPage() {
                   setForm({
                     title: '', description: '', price: '', roomType: 'individual',
                     isFurnished: true, bedrooms: 1, bathrooms: 1, maxTenants: 1,
-                    areaM2: '', distanceToUniversityKm: '', idealFor: '',
+                    areaM2: '', idealFor: '',
                     availableFrom: '', availabilityNote: '',
-                    location: { address: '', district: '', city: 'Bogotá', state: 'Cundinamarca', country: 'Colombia', postalCode: '' },
+                    location: { address: '', district: '', city: 'Bogotá', state: 'Cundinamarca', country: 'Colombia', postalCode: '', latitude: '', longitude: '' },
                     amenities: [1, 2, 3, 5],
                     photos: ['', '', ''],
                     rulesText: 'No fumar\nNo mascotas\nHorario de ingreso respetado'

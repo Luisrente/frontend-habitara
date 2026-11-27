@@ -4,6 +4,7 @@ import UserMenu from '../../../shared/components/UserMenu';
 import CatalogMapView from '../components/CatalogMapView.jsx';
 
 import { API_URL } from '../../../config.js';
+import { UNIVERSITIES, nearestUniversity, haversineKm } from '../../../shared/utils/universities.js';
 
 function HeartIcon({ filled = false }) {
   return (
@@ -61,6 +62,8 @@ function CatalogPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [priceMax, setPriceMax] = useState(null);
   const [selectedServices, setSelectedServices] = useState([]);
+  const [selectedUnivId, setSelectedUnivId] = useState('');
+  const UNIV_RADIUS_KM = 5;
 
   useEffect(() => {
     const storedUser = localStorage.getItem('habitara_user');
@@ -219,6 +222,16 @@ function CatalogPage() {
         });
       });
     }
+    if (selectedUnivId) {
+      const univ = UNIVERSITIES.find(u => u.id === Number(selectedUnivId));
+      if (univ) {
+        result = result.filter(r => {
+          const loc = r.location || {};
+          if (!loc.latitude || !loc.longitude) return false;
+          return haversineKm(Number(loc.latitude), Number(loc.longitude), univ.lat, univ.lng) <= UNIV_RADIUS_KM;
+        });
+      }
+    }
     for (const f of activeQuickFilters) {
       const fn = QUICK_FILTER_FN[f];
       if (fn) result = result.filter(fn);
@@ -237,7 +250,7 @@ function CatalogPage() {
       });
     }
     return result;
-  }, [selectedType, rooms, activeQuickFilters, searchQuery, currentMax, priceRange.max, selectedServices]);
+  }, [selectedType, rooms, activeQuickFilters, searchQuery, currentMax, priceRange.max, selectedServices, selectedUnivId]);
 
   const navigate = useNavigate();
 
@@ -281,6 +294,11 @@ function CatalogPage() {
                   {favorites.length > 0 && (
                     <span className="favorites-count">{favorites.length}</span>
                   )}
+                </Link>
+                <Link to="/chats" className="icon-action" title="Mis mensajes" aria-label="Mis mensajes">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                  </svg>
                 </Link>
                 <Link to="/reservations" className="icon-action catalog-reservations-icon" title="Mis reservas" aria-label="Mis reservas">
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
@@ -356,13 +374,15 @@ function CatalogPage() {
             </div>
 
             <div className="select-row">
-              <select defaultValue="Universidad cercana">
-                <option>Universidad cercana</option>
-                <option>Unicor</option>
-                <option>UNMSM</option>
-                <option>UPC</option>
+              <select
+                value={selectedUnivId}
+                onChange={e => setSelectedUnivId(e.target.value)}
+              >
+                <option value="">Todas las universidades</option>
+                {UNIVERSITIES.map(u => (
+                  <option key={u.id} value={u.id}>{u.shortName} — {u.name}</option>
+                ))}
               </select>
-              <button type="button" className="secondary-btn">Más filtros</button>
             </div>
 
             <div className="panel-services">
@@ -400,7 +420,7 @@ function CatalogPage() {
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
               <line x1="4" y1="6" x2="20" y2="6"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="11" y1="18" x2="13" y2="18"/>
             </svg>
-            Filtros{(activeQuickFilters.length + selectedServices.length) > 0 && <span className="catalog-filter-count">{activeQuickFilters.length + selectedServices.length}</span>}
+            Filtros{(activeQuickFilters.length + selectedServices.length + (selectedUnivId ? 1 : 0)) > 0 && <span className="catalog-filter-count">{activeQuickFilters.length + selectedServices.length + (selectedUnivId ? 1 : 0)}</span>}
           </button>
 
           <div className="catalog-mobile-types">
@@ -443,11 +463,14 @@ function CatalogPage() {
               </label>
             </div>
             <div className="select-row" style={{ marginTop: 14 }}>
-              <select defaultValue="Universidad cercana">
-                <option>Universidad cercana</option>
-                <option>Unicor</option>
-                <option>UNMSM</option>
-                <option>UPC</option>
+              <select
+                value={selectedUnivId}
+                onChange={e => setSelectedUnivId(e.target.value)}
+              >
+                <option value="">Todas las universidades</option>
+                {UNIVERSITIES.map(u => (
+                  <option key={u.id} value={u.id}>{u.shortName} — {u.name}</option>
+                ))}
               </select>
             </div>
             <div className="panel-services" style={{ marginTop: 14 }}>
@@ -558,6 +581,15 @@ function CatalogPage() {
                     </div>
 
                     <p className="room-location">📍 {locationText || room.locationText || 'Ubicación disponible'}</p>
+                    {(() => {
+                      const loc = room.location || {};
+                      const nearest = nearestUniversity(loc.latitude, loc.longitude);
+                      return nearest ? (
+                        <p className="room-univ-distance">
+                          🎓 {nearest.shortName} · {nearest.distanceKm} km
+                        </p>
+                      ) : null;
+                    })()}
 
                     <div className="room-services">
                       {services.map((service) => (

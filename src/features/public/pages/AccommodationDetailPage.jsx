@@ -4,6 +4,7 @@ import UserMenu from '../../../shared/components/UserMenu';
 import LocationMap from '../../../shared/components/LocationMap.jsx';
 
 import { API_URL } from '../../../config.js';
+import { allDistances } from '../../../shared/utils/universities.js';
 
 function buildMonthGrid(year, month) {
   const firstDay = new Date(year, month, 1);
@@ -285,6 +286,29 @@ function AccommodationDetailPage() {
               <h3>Ubicación</h3>
               <LocationMap location={roomLocation} title={room.title} />
             </div>
+
+            {(() => {
+              const dists = allDistances(roomLocation.latitude, roomLocation.longitude);
+              if (!dists.length) return null;
+              return (
+                <div className="detail-section">
+                  <h3>Distancia a universidades</h3>
+                  <ul className="univ-distance-list">
+                    {dists.map(u => (
+                      <li key={u.id} className="univ-distance-item">
+                        <span className="univ-distance-name">
+                          <strong>{u.shortName}</strong>
+                          <span>{u.name}</span>
+                        </span>
+                        <span className={`univ-distance-km${u.distanceKm <= 1 ? ' near' : u.distanceKm <= 3 ? ' mid' : ''}`}>
+                          {u.distanceKm} km
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              );
+            })()}
           </div>
 
           <aside className="detail-side">

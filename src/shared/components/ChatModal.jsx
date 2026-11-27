@@ -8,18 +8,20 @@ function fmtDate(dateStr) {
   return new Date(dateStr).toLocaleDateString('es-CO', { day: 'numeric', month: 'short' });
 }
 
-function ChatModal({ reservationId, otherName, onClose }) {
-  const [conversationId, setConversationId] = useState(null);
+// Props: { conversationId } ó { reservationId } + otherName + onClose
+function ChatModal({ conversationId: propConvId, reservationId, otherName, onClose }) {
+  const [conversationId, setConversationId] = useState(propConvId || null);
   const [messages, setMessages]             = useState([]);
   const [text, setText]                     = useState('');
-  const [loading, setLoading]               = useState(true);
+  const [loading, setLoading]               = useState(!propConvId);
   const [sending, setSending]               = useState(false);
   const [error, setError]                   = useState('');
   const bottomRef = useRef(null);
   const inputRef  = useRef(null);
 
-  // 1. Obtener o crear la conversación
+  // 1. Si se pasa reservationId, obtener/crear la conversación
   useEffect(() => {
+    if (propConvId || !reservationId) return;
     const token = localStorage.getItem('habitara_token');
     fetch(`${API_URL}/messages/conversations`, {
       method: 'POST',
@@ -33,7 +35,7 @@ function ChatModal({ reservationId, otherName, onClose }) {
       })
       .catch(() => setError('No se pudo conectar con el servidor'))
       .finally(() => setLoading(false));
-  }, [reservationId]);
+  }, [reservationId, propConvId]);
 
   // 2. Cargar mensajes cuando ya tenemos conversationId
   useEffect(() => {
