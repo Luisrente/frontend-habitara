@@ -1,6 +1,7 @@
 import { useMemo, useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import UserMenu from '../../../shared/components/UserMenu';
+import CatalogMapView from '../components/CatalogMapView.jsx';
 
 import { API_URL } from '../../../config.js';
 
@@ -37,6 +38,15 @@ const QUICK_FILTER_FN = {
 
 const serviceOptions = ['WiFi', 'Amueblado', 'Baño privado', 'Cocina', 'Parqueadero', 'Aire Acondicionado'];
 
+const SERVICE_MATCH = {
+  'WiFi':              (a) => /wifi/i.test(a),
+  'Amueblado':         (a) => /amueblado|amoblado|furnished/i.test(a),
+  'Baño privado':      (a) => /baño\s*privado|private\s*bath/i.test(a),
+  'Cocina':            (a) => /cocina|kitchen/i.test(a),
+  'Parqueadero':       (a) => /parqueadero|parking|garaje/i.test(a),
+  'Aire Acondicionado':(a) => /aire\s*acondicionado|a\/c|ac\b/i.test(a),
+};
+
 function CatalogPage() {
   const [selectedType, setSelectedType] = useState('Todos');
   const [viewMode, setViewMode] = useState('grid');
@@ -49,6 +59,8 @@ function CatalogPage() {
   const [activeQuickFilters, setActiveQuickFilters] = useState([]);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [priceMax, setPriceMax] = useState(null);
+  const [selectedServices, setSelectedServices] = useState([]);
 
   useEffect(() => {
     const storedUser = localStorage.getItem('habitara_user');
@@ -169,10 +181,44 @@ function CatalogPage() {
       prev.includes(f) ? prev.filter(x => x !== f) : [...prev, f]
     );
 
+  const toggleService = (s) =>
+    setSelectedServices(prev =>
+      prev.includes(s) ? prev.filter(x => x !== s) : [...prev, s]
+    );
+
+  const priceRange = useMemo(() => {
+    if (!rooms.length) return { min: 0, max: 1000000 };
+    const prices = rooms.map(r => Number(r.price || 0)).filter(p => p > 0);
+    if (!prices.length) return { min: 0, max: 1000000 };
+    return {
+      min: Math.min(...prices),
+      max: Math.max(...prices),
+    };
+  }, [rooms]);
+
+  useEffect(() => {
+    if (priceMax === null && priceRange.max > 0) {
+      setPriceMax(priceRange.max);
+    }
+  }, [priceRange, priceMax]);
+
+  const currentMax = priceMax ?? priceRange.max;
+
   const filteredRooms = useMemo(() => {
     let result = rooms;
     if (selectedType !== 'Todos')
       result = result.filter(r => r.roomType === selectedType);
+    if (currentMax < priceRange.max)
+      result = result.filter(r => Number(r.price || 0) <= currentMax);
+    if (selectedServices.length > 0) {
+      result = result.filter(r => {
+        const names = (r.amenities || []).map(a => a.name || a);
+        return selectedServices.every(svc => {
+          const matchFn = SERVICE_MATCH[svc];
+          return matchFn && names.some(n => matchFn(n));
+        });
+      });
+    }
     for (const f of activeQuickFilters) {
       const fn = QUICK_FILTER_FN[f];
       if (fn) result = result.filter(fn);
@@ -191,7 +237,7 @@ function CatalogPage() {
       });
     }
     return result;
-  }, [selectedType, rooms, activeQuickFilters, searchQuery]);
+  }, [selectedType, rooms, activeQuickFilters, searchQuery, currentMax, priceRange.max, selectedServices]);
 
   const navigate = useNavigate();
 
@@ -274,11 +320,17 @@ function CatalogPage() {
           <div className={`filters-panel${filtersOpen ? ' filters-panel--open' : ''}`}>
             <div className="panel-row">
               <label>
-                Presupuesto máximo
+                Presupuesto máximo — <strong>{formatPrice(currentMax)}</strong>
                 <div className="range-meta">
-                  <span>COP $ 300.000</span>
-                  <input type="range" min="300000" max="1200000" defaultValue="600000" />
-                  <span>COP $ 1.200.000</span>
+                  <span>{formatPrice(priceRange.min)}</span>
+                  <input
+                    type="range"
+                    min={priceRange.min}
+                    max={priceRange.max}
+                    value={currentMax}
+                    onChange={e => setPriceMax(Number(e.target.value))}
+                  />
+                  <span>{formatPrice(priceRange.max)}</span>
                 </div>
               </label>
             </div>
@@ -316,7 +368,11 @@ function CatalogPage() {
             <div className="panel-services">
               {serviceOptions.map((service) => (
                 <label key={service} className="service-check">
-                  <input type="checkbox" /> {service}
+                  <input
+                    type="checkbox"
+                    checked={selectedServices.includes(service)}
+                    onChange={() => toggleService(service)}
+                  /> {service}
                 </label>
               ))}
             </div>
@@ -344,7 +400,7 @@ function CatalogPage() {
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
               <line x1="4" y1="6" x2="20" y2="6"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="11" y1="18" x2="13" y2="18"/>
             </svg>
-            Filtros{activeQuickFilters.length > 0 && <span className="catalog-filter-count">{activeQuickFilters.length}</span>}
+            Filtros{(activeQuickFilters.length + selectedServices.length) > 0 && <span className="catalog-filter-count">{activeQuickFilters.length + selectedServices.length}</span>}
           </button>
 
           <div className="catalog-mobile-types">
@@ -372,11 +428,17 @@ function CatalogPage() {
           <div className="catalog-mobile-filters">
             <div className="panel-row">
               <label>
-                Presupuesto máximo
+                Presupuesto máximo — <strong>{formatPrice(currentMax)}</strong>
                 <div className="range-meta">
-                  <span>COP $ 300.000</span>
-                  <input type="range" min="300000" max="1200000" defaultValue="600000" />
-                  <span>COP $ 1.200.000</span>
+                  <span>{formatPrice(priceRange.min)}</span>
+                  <input
+                    type="range"
+                    min={priceRange.min}
+                    max={priceRange.max}
+                    value={currentMax}
+                    onChange={e => setPriceMax(Number(e.target.value))}
+                  />
+                  <span>{formatPrice(priceRange.max)}</span>
                 </div>
               </label>
             </div>
@@ -391,7 +453,11 @@ function CatalogPage() {
             <div className="panel-services" style={{ marginTop: 14 }}>
               {serviceOptions.map((service) => (
                 <label key={service} className="service-check">
-                  <input type="checkbox" /> {service}
+                  <input
+                    type="checkbox"
+                    checked={selectedServices.includes(service)}
+                    onChange={() => toggleService(service)}
+                  /> {service}
                 </label>
               ))}
             </div>
@@ -447,8 +513,16 @@ function CatalogPage() {
           <p>Cargando habitaciones...</p>
         ) : filteredRooms.length === 0 ? (
           <p>No hay alojamientos publicados aún.</p>
+        ) : viewMode === 'map' ? (
+          <CatalogMapView
+            rooms={filteredRooms}
+            favorites={favorites}
+            onToggleFavorite={toggleFavorite}
+            user={user}
+            onShowPrompt={() => setShowPrompt(true)}
+          />
         ) : (
-          <section className={viewMode === 'grid' ? 'rooms-grid' : 'rooms-grid rooms-grid--split'}>
+          <section className="rooms-grid">
             {filteredRooms.map((room) => {
               const location = room.location || {};
               const image = room.photos?.[0]?.url || room.image || 'https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=1200&q=80';

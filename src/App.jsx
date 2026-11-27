@@ -13,6 +13,7 @@ import ProtectedRoute from './features/auth/components/ProtectedRoute';
 import Layout from './shared/components/Layout';
 import LandlordRequestPage from './features/auth/pages/LandlordRequestPage';
 import AdminLandlordRequestsPage from './features/admin/pages/AdminLandlordRequestsPage';
+import AdminReservationsPage from './features/admin/pages/AdminReservationsPage';
 import AccountPage from './features/public/pages/AccountPage';
 
 function App() {
@@ -50,6 +51,7 @@ function App() {
       />
 
       <Route path="/admin/landlord-requests" element={<AdminLandlordRequestsPage />} />
+      <Route path="/admin/reservations" element={<AdminReservationsPage />} />
 
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

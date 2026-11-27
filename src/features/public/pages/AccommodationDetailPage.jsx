@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import UserMenu from '../../../shared/components/UserMenu';
+import LocationMap from '../../../shared/components/LocationMap.jsx';
 
 import { API_URL } from '../../../config.js';
 
@@ -279,6 +280,11 @@ function AccommodationDetailPage() {
                 <p>{room.availabilityNote}</p>
               </div>
             )}
+
+            <div className="detail-section">
+              <h3>Ubicación</h3>
+              <LocationMap location={roomLocation} title={room.title} />
+            </div>
           </div>
 
           <aside className="detail-side">
