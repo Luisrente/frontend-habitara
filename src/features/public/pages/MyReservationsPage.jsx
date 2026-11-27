@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import UserMenu from '../../../shared/components/UserMenu';
 
 import { API_URL } from '../../../config.js';
+import ChatModal from '../../../shared/components/ChatModal.jsx';
 
 const STATUS = {
   pending:   { label: 'Pendiente',  color: '#92400e', bg: '#fef3c7', dot: '#f59e0b' },
@@ -21,6 +22,7 @@ function MyReservationsPage() {
   const [user, setUser]               = useState(null);
   const [reservations, setReservations] = useState([]);
   const [loading, setLoading]         = useState(true);
+  const [chatReservation, setChatReservation] = useState(null);
 
   useEffect(() => {
     const token      = localStorage.getItem('habitara_token');
@@ -118,13 +120,25 @@ function MyReservationsPage() {
                     </div>
 
                     {/* Acción */}
-                    {r.status === 'pending' && acc.id && (
-                      <div className="res-card__footer">
+                    <div className="res-card__footer">
+                      {acc.id && (
                         <Link to={`/accommodation/${acc.id}`} className="res-card__link">
                           Ver alojamiento →
                         </Link>
-                      </div>
-                    )}
+                      )}
+                      {r.status === 'confirmed' && (
+                        <button
+                          type="button"
+                          className="lres-chat-btn"
+                          onClick={() => setChatReservation({ id: r.id, landlordName: acc.title || 'Arrendador' })}
+                        >
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                          </svg>
+                          Escribir al arrendador
+                        </button>
+                      )}
+                    </div>
                   </div>
                 </article>
               );
@@ -132,6 +146,14 @@ function MyReservationsPage() {
           </div>
         )}
       </main>
+
+      {chatReservation && (
+        <ChatModal
+          reservationId={chatReservation.id}
+          otherName={chatReservation.landlordName}
+          onClose={() => setChatReservation(null)}
+        />
+      )}
     </div>
   );
 }

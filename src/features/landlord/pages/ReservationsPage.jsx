@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 
 import { API_URL } from '../../../config.js';
+import ChatModal from '../../../shared/components/ChatModal.jsx';
 
 const STATUS = {
   pending:   { label: 'Pendiente',  color: '#92400e', bg: '#fef3c7', dot: '#f59e0b' },
@@ -19,6 +20,7 @@ function ReservationsPage() {
   const [loading, setLoading]             = useState(true);
   const [updatingId, setUpdatingId]       = useState(null);
   const [draftStatuses, setDraftStatuses] = useState({});
+  const [chatReservation, setChatReservation] = useState(null); // { id, tenantName }
 
   const fetchReservations = () => {
     const token = localStorage.getItem('habitara_token');
@@ -134,6 +136,25 @@ function ReservationsPage() {
                     </div>
                   </div>
 
+                  {/* Chat button for confirmed reservations */}
+                  {r.status === 'confirmed' && (
+                    <div className="lres-card__chat">
+                      <button
+                        type="button"
+                        className="lres-chat-btn"
+                        onClick={() => setChatReservation({
+                          id: r.id,
+                          tenantName: `${tenant.firstName || ''} ${tenant.lastName || ''}`.trim()
+                        })}
+                      >
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                        </svg>
+                        Enviar mensaje
+                      </button>
+                    </div>
+                  )}
+
                   {/* Status control */}
                   {!isLocked ? (
                     <div className="lres-card__actions">
@@ -179,6 +200,14 @@ function ReservationsPage() {
             );
           })}
         </div>
+      )}
+
+      {chatReservation && (
+        <ChatModal
+          reservationId={chatReservation.id}
+          otherName={chatReservation.tenantName}
+          onClose={() => setChatReservation(null)}
+        />
       )}
     </div>
   );
