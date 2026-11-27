@@ -59,6 +59,33 @@ function FavoritesPage() {
   }, [navigate]);
 
   const favoriteRooms = useMemo(() => rooms, [rooms]);
+  const [removeError, setRemoveError] = useState('');
+
+  const removeFavorite = async (room) => {
+    const token = localStorage.getItem('habitara_token');
+    const prevRooms = rooms;
+    const prevFavorites = favorites;
+    setRemoveError('');
+    setRooms(r => r.filter(x => x.id !== room.id));
+    setFavorites(f => f.filter(id => id !== Number(room.id)));
+
+    try {
+      const response = await fetch(`${API_URL}/favorites`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ accommodationId: room.id })
+      });
+      const data = await response.json();
+      if (!response.ok || !data.success) throw new Error(data.message);
+      const ids = data.data.favorites.map(Number);
+      setFavorites(ids);
+      localStorage.setItem('habitara_favorites', JSON.stringify(ids));
+    } catch {
+      setRooms(prevRooms);
+      setFavorites(prevFavorites);
+      setRemoveError(`No se pudo quitar "${room.title}" de favoritos. Inténtalo de nuevo.`);
+    }
+  };
 
   const handleLogout = () => {
     localStorage.removeItem('habitara_token');
@@ -97,6 +124,8 @@ function FavoritesPage() {
           <Link to="/" className="link-button muted">Volver al catálogo</Link>
         </section>
 
+        {removeError && <div className="booking-msg booking-msg--error">{removeError}</div>}
+
         {favoriteRooms.length === 0 ? (
           <div className="empty-state-box">
             <h3>No tienes habitaciones guardadas</h3>
@@ -116,6 +145,17 @@ function FavoritesPage() {
                   <div className="room-card__image-wrap">
                     <img src={image} alt={room.title} className="room-card__image" />
                     <span className="room-badge featured">Guardado</span>
+                    <button
+                      type="button"
+                      className="fav-remove-btn"
+                      onClick={() => removeFavorite(room)}
+                      aria-label={`Quitar ${room.title} de favoritos`}
+                      title="Quitar de favoritos"
+                    >
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round">
+                        <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                      </svg>
+                    </button>
                   </div>
 
                   <div className="room-card__content">
