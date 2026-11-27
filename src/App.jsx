@@ -14,6 +14,7 @@ import Layout from './shared/components/Layout';
 import LandlordRequestPage from './features/auth/pages/LandlordRequestPage';
 import AdminLandlordRequestsPage from './features/admin/pages/AdminLandlordRequestsPage';
 import AdminReservationsPage from './features/admin/pages/AdminReservationsPage';
+import AdminStatsPage from './features/admin/pages/AdminStatsPage';
 import AccountPage from './features/public/pages/AccountPage';
 import ChatsPage from './features/public/pages/ChatsPage';
 
@@ -54,6 +55,7 @@ function App() {
 
       <Route path="/admin/landlord-requests" element={<AdminLandlordRequestsPage />} />
       <Route path="/admin/reservations" element={<AdminReservationsPage />} />
+      <Route path="/admin/stats" element={<AdminStatsPage />} />
 
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
