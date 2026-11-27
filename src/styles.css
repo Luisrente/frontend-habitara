@@ -4594,8 +4594,16 @@ textarea {
 }
 
 /* Switch con ícono + label */
-.switch-icon  { flex-shrink: 0; }
-.switch-label { font-size: 0.82rem; }
+.view-switcher { align-items: center; gap: 2px; }
+.view-switcher .switch {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  line-height: 1;
+}
+.switch-icon  { flex-shrink: 0; display: block; }
+.switch-label { font-size: 0.82rem; line-height: 1; }
 
 .catalog-search-expanded {
   display: none;
