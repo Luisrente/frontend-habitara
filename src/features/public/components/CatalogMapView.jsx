@@ -175,7 +175,7 @@ export default function CatalogMapView({ rooms, favorites, onToggleFavorite, use
                   aria-label={isFav ? 'Quitar de favoritos' : 'Guardar en favoritos'}
                   title={isFav ? 'Quitar de favoritos' : 'Guardar en favoritos'}
                 >
-                  <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true">
+                  <svg width="26" height="26" viewBox="0 0 24 24" aria-hidden="true">
                     <path d="M12 20.5s-7.5-4.35-9.22-8.06C1.66 9.57 3.22 5.5 7.28 5.5c2.06 0 3.24 1.09 4.1 2.22.86-1.13 2.04-2.22 4.1-2.22 4.06 0 5.62 4.07 4.5 6.94C19.5 16.15 12 20.5 12 20.5Z"
                       fill={isFav ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>

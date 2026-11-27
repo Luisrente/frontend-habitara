@@ -4356,8 +4356,8 @@ textarea {
   transition: transform .18s cubic-bezier(.34,1.56,.64,1), background .18s, box-shadow .18s;
 }
 .map-list-card__img-wrap .favorite-button svg {
-  width: 20px;
-  height: 20px;
+  width: 26px;
+  height: 26px;
 }
 .map-list-card__img-wrap .favorite-button:hover {
   transform: scale(1.15);
