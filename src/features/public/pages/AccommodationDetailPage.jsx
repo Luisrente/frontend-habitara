@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import UserMenu from '../../../shared/components/UserMenu';
 import LocationMap from '../../../shared/components/LocationMap.jsx';
+import PaymentModal from '../../../shared/components/PaymentModal.jsx';
 
 import { API_URL } from '../../../config.js';
 import { allDistances } from '../../../shared/utils/universities.js';
@@ -47,6 +48,7 @@ function AccommodationDetailPage() {
   const [reservationError, setReservationError] = useState('');
   const [reservationSuccess, setReservationSuccess] = useState('');
   const [submittingReservation, setSubmittingReservation] = useState(false);
+  const [showPayment, setShowPayment] = useState(false);
   const [calendarMonth, setCalendarMonth] = useState(new Date(new Date().getFullYear(), new Date().getMonth(), 1));
 
   const monthLabel = calendarMonth.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' });
@@ -108,7 +110,7 @@ function AccommodationDetailPage() {
     }));
   };
 
-  const handleReservationSubmit = async (event) => {
+  const handleReservationSubmit = (event) => {
     event.preventDefault();
     setReservationError('');
     setReservationSuccess('');
@@ -123,6 +125,11 @@ function AccommodationDetailPage() {
       return;
     }
 
+    setShowPayment(true);
+  };
+
+  const handlePaymentConfirm = async () => {
+    setShowPayment(false);
     try {
       setSubmittingReservation(true);
       const token = localStorage.getItem('habitara_token');
@@ -420,6 +427,21 @@ function AccommodationDetailPage() {
           </aside>
         </div>
       </main>
+
+      {showPayment && (() => {
+        const nights = reservationForm.startDate && reservationForm.endDate
+          ? Math.max(1, Math.round((new Date(reservationForm.endDate) - new Date(reservationForm.startDate)) / 86400000))
+          : 1;
+        const total = (room?.price || 0) * nights;
+        return (
+          <PaymentModal
+            nights={nights}
+            totalLabel={`COP ${total.toLocaleString('es-CO')}`}
+            onClose={() => setShowPayment(false)}
+            onConfirm={handlePaymentConfirm}
+          />
+        );
+      })()}
     </div>
   );
 }
